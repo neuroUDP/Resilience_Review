@@ -13,11 +13,11 @@
 
 clear; clc;
 
-csv_path = '/Users/josefinamattoli/Library/CloudStorage/GoogleDrive-josefinamattoli@gmail.com/.shortcut-targets-by-id/1x8K59aCdWa9nTsSzm0qLX40R4OEzEE2o/Practica_Electiva_Entre_Mentes_Y_Metodos_Alumnos/Nuestro paper/Revision_2/Analisis_Revision_2/Data_Resiliencia_13:08.csv';
+csv_path = 'Insert_Your_Data_File_Path_Here.csv';
 
 opts                   = detectImportOptions(csv_path, 'Delimiter', ',');
 opts.VariableNamesLine = 1;
-opts.DataLines         = [3 Inf];
+opts.DataLines         = [2 Inf];
 opts                   = setvartype(opts, 'char');
 T                      = readtable(csv_path, opts);
 
@@ -25,6 +25,7 @@ T                      = readtable(csv_path, opts);
 % Build the long-format table
 % -------------------------------------------------------------------------
 rows_authors  = {};
+rows_ef_orig  = {};   % EF_Evaluated (study-level, repeated per instrument row)
 rows_instr    = {};
 rows_instr_au = {};
 rows_ef       = {};
@@ -34,6 +35,11 @@ for i = 1:height(T)
     val = strtrim(T.EF_Instrument{i});
     if isempty(val) || strcmpi(val, 'nan')
         continue
+    end
+
+    ef_original_val = strtrim(T.EF_Evaluated{i});
+    if isempty(ef_original_val) || strcmpi(ef_original_val, 'nan')
+        ef_original_val = '';
     end
 
     entries = split_top_level(val, ';');
@@ -48,24 +54,26 @@ for i = 1:height(T)
         if isempty(ef_list)
             % No EF category found for this instrument — flag for review
             rows_authors{end+1}  = T.Authors{i};        %#ok<AGROW>
-            rows_instr{end+1}    = instr_name;           %#ok<AGROW>
-            rows_instr_au{end+1} = instr_author;          %#ok<AGROW>
+            rows_ef_orig{end+1}  = ef_original_val;       %#ok<AGROW>
+            rows_instr{end+1}    = instr_name;             %#ok<AGROW>
+            rows_instr_au{end+1} = instr_author;            %#ok<AGROW>
             rows_ef{end+1}       = '[NO EF CATEGORY FOUND — REVIEW]'; %#ok<AGROW>
-            rows_raw{end+1}      = entry;                 %#ok<AGROW>
+            rows_raw{end+1}      = entry;                   %#ok<AGROW>
         else
             for e = 1:numel(ef_list)
                 rows_authors{end+1}  = T.Authors{i};       %#ok<AGROW>
-                rows_instr{end+1}    = instr_name;          %#ok<AGROW>
-                rows_instr_au{end+1} = instr_author;         %#ok<AGROW>
-                rows_ef{end+1}       = strtrim(ef_list{e});  %#ok<AGROW>
-                rows_raw{end+1}      = entry;                %#ok<AGROW>
+                rows_ef_orig{end+1}  = ef_original_val;      %#ok<AGROW>
+                rows_instr{end+1}    = instr_name;            %#ok<AGROW>
+                rows_instr_au{end+1} = instr_author;           %#ok<AGROW>
+                rows_ef{end+1}       = strtrim(ef_list{e});     %#ok<AGROW>
+                rows_raw{end+1}      = entry;                    %#ok<AGROW>
             end
         end
     end
 end
 
-ResultTable = table(rows_authors(:), rows_instr(:), rows_instr_au(:), rows_ef(:), rows_raw(:), ...
-    'VariableNames', {'Study_Authors', 'Instrument_Name', 'Instrument_Author', 'EF_Category', 'Raw_Entry'});
+ResultTable = table(rows_authors(:), rows_ef_orig(:), rows_instr(:), rows_instr_au(:), rows_ef(:), rows_raw(:), ...
+    'VariableNames', {'Study_Authors', 'EF_Original', 'Instrument_Name', 'Instrument_Author', 'EF_Category', 'Raw_Entry'});
 
 % Restore [ABBR] -> (ABBR) in Instrument_Name for display purposes
 % (brackets were only needed internally to protect the abbreviation from
@@ -97,25 +105,16 @@ if ~isempty(flagged)
 end
 
 % -------------------------------------------------------------------------
-% Save to CSV for easier review outside MATLAB
-% -------------------------------------------------------------------------
-out_path = fullfile(fileparts(csv_path), 'EF_Instrument_parsed.csv');
-writetable(ResultTable, out_path);
-fprintf('\nParsed table saved to:\n  %s\n', out_path);
-
-% Open ResultTable in the Variables editor (a tab), so it can be reviewed
-% directly in MATLAB without leaving the app
-openvar('ResultTable');
-
-% -------------------------------------------------------------------------
-% Second table: same data, sorted by EF_Category
+% Save only the sorted-by-EF_Category table
 % -------------------------------------------------------------------------
 ResultTable_by_EF = sortrows(ResultTable, 'EF_Category');
 openvar('ResultTable_by_EF');
 
-out_path_by_ef = fullfile(fileparts(csv_path), 'EF_Instrument_parsed_by_EF.csv');
+output_dir_parsed = '/Users/josefinamattoli/Library/CloudStorage/GoogleDrive-josefinamattoli@gmail.com/.shortcut-targets-by-id/1x8K59aCdWa9nTsSzm0qLX40R4OEzEE2o/Practica_Electiva_Entre_Mentes_Y_Metodos_Alumnos/Nuestro paper/Revision_2/Analisis_Revision_2/Tablas_Parsed_Data';
+
+out_path_by_ef = fullfile(output_dir_parsed, 'EF_Instrument_parsed_by_EF.csv');
 writetable(ResultTable_by_EF, out_path_by_ef);
-fprintf('Parsed table (sorted by EF_Category) saved to:\n  %s\n', out_path_by_ef);
+fprintf('\nParsed table (sorted by EF_Category) saved to:\n  %s\n', out_path_by_ef);
 
 
 % =========================================================================
