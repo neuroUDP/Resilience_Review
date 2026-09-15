@@ -3,30 +3,16 @@
 %   Resilience_Conceptualization | N_Studies | Construct_Measured |
 %   Instrument | Instrument_Author | N_Studies_per_Instrument
 %
-% REQUIRED PRE-PROCESSING (do this in the CSV before running):
-%   Replace the abbreviation parenthesis (the one glued to the instrument
-%   name, with no author/year) with square brackets [ ], same convention
-%   used for Tables 5 and 6.
-%   e.g. "Brief Resilience Scale (BRS) (Smith et al., 2008)"
-%     -> "Brief Resilience Scale [BRS] (Smith et al., 2008)"
-%
 % Format assumed per entry in Resilience_Instrument: Name [ABBR] (Authors)
 %   - [ABBR] is optional
 %   - (Authors) is optional
 %   - Entries within a cell are separated by ';' at the top level (i.e.
 %     outside any parentheses/brackets).
-%
-% Note: Construct_Measured (from Resilience_Measure) is a study-level
-% field and is repeated across all instrument rows belonging to that
-% study; where a study lists more than one construct (e.g. "Executive
-% function; Cognitive function"), the full list is kept as-is, since the
-% source data does not pair individual instruments to individual
-% constructs. "Resilience scale" is relabeled to "Resilience" throughout.
 % =========================================================================
 
 clear; clc;
 
-csv_path = '/Users/josefinamattoli/Library/CloudStorage/GoogleDrive-josefinamattoli@gmail.com/.shortcut-targets-by-id/1x8K59aCdWa9nTsSzm0qLX40R4OEzEE2o/Practica_Electiva_Entre_Mentes_Y_Metodos_Alumnos/Nuestro paper/Revision_2/Analisis_Revision_2/Data_Resiliencia_19:08.csv';
+csv_path = 'Insert_Your_Data_File_Path_Here.csv';
 
 opts                   = detectImportOptions(csv_path, 'Delimiter', ',');
 opts.VariableNamesLine = 1;
