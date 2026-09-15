@@ -1,13 +1,9 @@
 % =========================================================================
 % Figure 2. General characteristics of the included articles.
-%   A: Temporal distribution of publications (bar chart)
 %
-% Panels B (geographic distribution) and C (participant type) were removed
-% at the user's request. Map panels (country choropleth, participant-type
-% map) were removed previously — those are being added manually outside
-% MATLAB.
-%
-% Input:  CSV file with extracted data (first data row is metadata, skipped)
+% (A) Temporal distribution of publications by year.
+% (B) Geographic distribution of articles by country of data collection
+% Input:  CSV file with study data 
 % Output: Figure saved as .png and .fig in the same folder as the CSV
 % =========================================================================
 
