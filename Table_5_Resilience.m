@@ -4,11 +4,10 @@ clear; clc;
 % Figure 5. Executive functions evaluated.
 %   5A: Horizontal bar chart — Executive functions studied
 %
-% Built from EF_Instrument_parsed.csv (long-format table: one row per
-% Study x Instrument x EF_Category), instead of the raw EF_Evaluated
-% column, since that column had verified discrepancies with the actual
-% instrument-level data (e.g. some instruments' EF mapping were missing
-% from EF_Evaluated but present in EF_Instrument).
+% Built from Final_EF_Instrument_parsed_by_EF.csv (long-format table: one
+% row per Study x Instrument x EF_Category), reading the EF category
+% directly from the EF_Category column (already canonicalized upstream —
+% no keyword/synonym mapping needed here).
 % =========================================================================
 
 clear; clc;
@@ -16,7 +15,7 @@ clear; clc;
 % -------------------------------------------------------------------------
 % 1. File paths
 % -------------------------------------------------------------------------
-parsed_csv_path = '/Users/josefinamattoli/Library/CloudStorage/GoogleDrive-josefinamattoli@gmail.com/.shortcut-targets-by-id/1x8K59aCdWa9nTsSzm0qLX40R4OEzEE2o/Practica_Electiva_Entre_Mentes_Y_Metodos_Alumnos/Nuestro paper/Revision_2/Analisis_Revision_2/Tablas_Parsed_Data/EF_Instrument_parsed_by_EF.csv';
+parsed_csv_path = 'Insert_Your_Data_File_Path_Here.csv';
 
 output_name = 'Figure5_ExecutiveFunctions';
 
@@ -35,59 +34,64 @@ P    = readtable(parsed_csv_path, opts);
 P = P(~strcmp(P.EF_Category, '[NO EF CATEGORY FOUND — REVIEW]'), :);
 
 % -------------------------------------------------------------------------
-% 3. Map each (free-text) EF_Category entry to one of the five canonical
-%    executive function categories, via keyword/synonym matching — the
-%    same approach used to build Table 6. Anything that doesn't match is
-%    left unmapped and pooled into "Others".
+% 3. Fixed display order (top to bottom)
 % -------------------------------------------------------------------------
-canonical_labels = {'Working memory', 'Inhibitory control', 'Cognitive flexibility', ...
-                     'Attention', 'Cognitive control'};
+% "Others" is NOT a value that appears in EF_Category — it is a catch-all
+% for every row whose EF_Category does not match one of the five named
+% categories below (see Section 4).
+%
+% barh draws category 1 at the bottom of the axis, so the plotting order
+% must be the reverse of the requested top-to-bottom display order.
+named_categories = {'Working memory', 'Inhibitory control', ...
+                     'Cognitive flexibility', 'Attention', ...
+                     'Cognitive control'};
+display_order_top_to_bottom = [named_categories, {'Others'}];
+ef_labels_final = flip(display_order_top_to_bottom)';
 
-synonym_terms  = {'working memory', 'digit span', ...
-                   'inhibitory control', 'inhibit', 'inhibition', ...
-                   'cognitive flexibility', 'shift', ...
-                   'attention', 'attentional control', ...
-                   'cognitive control'};
-synonym_target = {'Working memory', 'Working memory', ...
-                   'Inhibitory control', 'Inhibitory control', 'Inhibitory control', ...
-                   'Cognitive flexibility', 'Cognitive flexibility', ...
-                   'Attention', 'Attention', ...
-                   'Cognitive control'};
-
-n_rows = height(P);
-P.EF_Canonical = repmat({'Others'}, n_rows, 1);
-
-for r = 1:n_rows
-    raw_lower = lower(P.EF_Category{r});
-    for s = 1:numel(synonym_terms)
-        if contains(raw_lower, synonym_terms{s})
-            P.EF_Canonical{r} = synonym_target{s};
-            break   % first match wins; canonical terms are checked before
-                     % their broader synonyms in the list above
-        end
-    end
+% -------------------------------------------------------------------------
+% 4. Count N STUDIES (not N rows/instruments) per EF category, so that a
+%    study using two instruments for the same function is only counted
+%    once. Rows that don't match any of the five named categories
+%    (case-insensitive) are pooled into "Others".
+% -------------------------------------------------------------------------
+is_named = false(height(P), 1);
+for c = 1:numel(named_categories)
+    is_named = is_named | strcmpi(P.EF_Category, named_categories{c});
 end
 
-% -------------------------------------------------------------------------
-% 4. Count N STUDIES (not N rows/instruments) per canonical EF category,
-%    so that a study using two instruments for the same function is only
-%    counted once
-% -------------------------------------------------------------------------
-ef_labels_final = [canonical_labels, {'Others'}]';
-ef_counts_final = zeros(numel(ef_labels_final), 1);
+% --- DIAGNOSTIC (remove once "Others" is confirmed correct) ------------
+% If unmatched_values comes back empty even though you expect ~14 studies
+% in "Others", the unmatched rows are being dropped upstream — most likely
+% by the Section 2 filter on '[NO EF CATEGORY FOUND — REVIEW]', before
+% ever reaching this point. Check EF_Category for those rows in the raw
+% CSV directly if so.
+unmatched_values = unique(P.EF_Category(~is_named));
+fprintf('\n[DIAGNOSTIC] Unmatched EF_Category values (-> "Others"):\n');
+disp(unmatched_values);
+fprintf('[DIAGNOSTIC] Rows unmatched: %d / %d\n', sum(~is_named), height(P));
 
+ef_counts_final = zeros(numel(ef_labels_final), 1);
 for c = 1:numel(ef_labels_final)
-    mask = strcmp(P.EF_Canonical, ef_labels_final{c});
+    if strcmp(ef_labels_final{c}, 'Others')
+        mask = ~is_named;   % everything that didn't match a named category
+    else
+        mask = strcmpi(P.EF_Category, ef_labels_final{c});
+    end
     ef_counts_final(c) = numel(unique(P.Study_Authors(mask)));
 end
 
-% Drop categories with zero studies (shouldn't happen, but just in case)
-keep = ef_counts_final > 0;
-ef_labels_final = ef_labels_final(keep);
-ef_counts_final = ef_counts_final(keep);
+% A zero count for one of the five NAMED categories most likely means a
+% spelling/casing mismatch against EF_Category — flag it. A zero count for
+% "Others" is fine (it just means every row matched a named category).
+zero_named_mask = ef_counts_final == 0 & ~strcmp(ef_labels_final, 'Others');
+if any(zero_named_mask)
+    warning('FIG5:zeroCount', ...
+            'No studies found for: %s. Check exact spelling in EF_Category.', ...
+            strjoin(ef_labels_final(zero_named_mask), ', '));
+end
 
-[ef_counts_sorted, sort_idx_ef] = sort(ef_counts_final, 'ascend');
-ef_labels_sorted = ef_labels_final(sort_idx_ef);
+ef_labels_sorted = ef_labels_final;
+ef_counts_sorted = ef_counts_final;
 
 % -------------------------------------------------------------------------
 % 5. Style settings
