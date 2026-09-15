@@ -16,7 +16,7 @@ clear; clc;
 % -------------------------------------------------------------------------
 % 1. File paths
 % -------------------------------------------------------------------------
-csv_path = '/Users/josefinamattoli/Library/CloudStorage/GoogleDrive-josefinamattoli@gmail.com/.shortcut-targets-by-id/1x8K59aCdWa9nTsSzm0qLX40R4OEzEE2o/Practica_Electiva_Entre_Mentes_Y_Metodos_Alumnos/Nuestro paper/Revision_2/Analisis_Revision_2/Data_CasiFinal_Resiliencia.csv';
+csv_path = 'Insert_Your_Data_File_Path_Here.csv';
 
 output_name = 'Figure2_General_Characteristics';
 
