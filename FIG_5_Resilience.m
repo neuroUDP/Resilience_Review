@@ -5,10 +5,7 @@ clear; clc;
 %   5A: Horizontal bar chart — Executive functions studied
 %
 % Built from EF_Instrument_parsed.csv (long-format table: one row per
-% Study x Instrument x EF_Category), instead of the raw EF_Evaluated
-% column, since that column had verified discrepancies with the actual
-% instrument-level data (e.g. some instruments' EF mapping were missing
-% from EF_Evaluated but present in EF_Instrument).
+% Study x Instrument x EF_Category)
 % =========================================================================
 
 clear; clc;
@@ -16,7 +13,7 @@ clear; clc;
 % -------------------------------------------------------------------------
 % 1. File paths
 % -------------------------------------------------------------------------
-parsed_csv_path = '/Users/josefinamattoli/Library/CloudStorage/GoogleDrive-josefinamattoli@gmail.com/.shortcut-targets-by-id/1x8K59aCdWa9nTsSzm0qLX40R4OEzEE2o/Practica_Electiva_Entre_Mentes_Y_Metodos_Alumnos/Nuestro paper/Revision_2/Analisis_Revision_2/EF_Instrument_parsed.csv';
+parsed_csv_path = 'Insert_Your_Data_File_Path_Here.csv';
 
 output_name = 'Figure5_ExecutiveFunctions';
 
