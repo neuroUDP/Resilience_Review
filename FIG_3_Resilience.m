@@ -26,7 +26,7 @@ out_fig    = fullfile(output_dir, [output_name '.fig']);
 % -------------------------------------------------------------------------
 opts                   = detectImportOptions(csv_path, 'Delimiter', ',');
 opts.VariableNamesLine = 1;
-opts.DataLines         = [3 Inf];
+opts.DataLines         = [2 Inf];
 opts                   = setvartype(opts, 'char');
 T                      = readtable(csv_path, opts);
 
