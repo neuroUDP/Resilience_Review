@@ -4,7 +4,7 @@
 %   3B: Pie chart — study design (cross-sectional / longitudinal / intervention)
 %   3C: Horizontal bar chart — brain measures (no / EEG / fMRI / etc.)
 %
-% Input:  CSV file with extracted data (first data row is metadata, skipped)
+% Input:  CSV file with extracted data
 % Output: Figure saved as .png and .fig in the same folder as the CSV
 % =========================================================================
 
@@ -13,7 +13,7 @@ clear; clc;
 % -------------------------------------------------------------------------
 % 1. File paths
 % -------------------------------------------------------------------------
-csv_path = '/Users/josefinamattoli/Library/CloudStorage/GoogleDrive-josefinamattoli@gmail.com/.shortcut-targets-by-id/1x8K59aCdWa9nTsSzm0qLX40R4OEzEE2o/Practica_Electiva_Entre_Mentes_Y_Metodos_Alumnos/Nuestro paper/Revision_2/Analisis_Revision_2/Data_CasiFinal_Resiliencia.csv';
+csv_path = 'Insert_Your_Data_File_Path_Here.csv;
 
 output_name = 'Figure3_Research_Methods';
 
@@ -79,6 +79,9 @@ end
 % 4. Aggregate counts
 % -------------------------------------------------------------------------
 
+% -- Merge "fMRI" and "fMRI; MRI" into a single "fMRI" category (panel C) --
+brain_labels = strrep(brain_labels, 'fMRI; MRI', 'fMRI');
+
 % 3A — general methods
 method_cats   = {'quantitative', 'qualitative', 'mixed'};
 method_labels = {'Quantitative', 'Qualitative', 'Mixed'};
@@ -98,23 +101,10 @@ design_counts = design_counts(keep_d);
 % 3C — brain measures
 [unique_brain, ~, idx_br] = unique(brain_labels);
 brain_counts = accumarray(idx_br, 1);
-% Sort: "No brain measure" first, then alphabetical
-no_idx = strcmp(unique_brain, 'No brain measure');
-other_mask   = ~no_idx;
-other_names  = unique_brain(other_mask);
-other_counts = brain_counts(other_mask);
-
-if isempty(other_names)
-    brain_display_names  = {'No brain measure'};
-    brain_display_counts = brain_counts(no_idx)';
-else
-    [other_names_sorted, sort_idx] = sort(other_names);
-    other_counts_sorted  = other_counts(sort_idx);
-    other_names_sorted   = reshape(other_names_sorted,  1, []);
-    other_counts_sorted  = reshape(other_counts_sorted, 1, []);
-    brain_display_names  = [{'No brain measure'}, other_names_sorted];
-    brain_display_counts = [brain_counts(no_idx); other_counts_sorted(:)]';
-end
+% Sort by count, ascending (shortest bar first)
+[brain_counts_sorted, sort_idx] = sort(brain_counts, 'descend');
+brain_display_names  = reshape(unique_brain(sort_idx), 1, []);
+brain_display_counts = reshape(brain_counts_sorted, 1, []);
 
 % -------------------------------------------------------------------------
 % 4b. Diagnostic: show which CSV rows fall into each Brain_Method category
