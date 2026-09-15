@@ -1,10 +1,10 @@
 % =========================================================================
 % Figure 4.Versión2 Assessment of Adverse Childhood Experiences (ACEs).
 %   4A: Horizontal bar chart — ACE types by framework category
-%   4B: Heatmap — N of ACE categories vs. N of instruments per study
+%   4B: Heatmap — N of ACE categories vs. N of instruments per article
 %       (cross-tabulation, replaces the previous separate C/D bar charts)
 %
-% Input:  CSV file with extracted data (first data row is metadata, skipped)
+% Input:  CSV file with extracted data
 % Output: Figure saved as .png and .fig in the same folder as the CSV
 % =========================================================================
 
@@ -13,7 +13,7 @@ clear; clc;
 % -------------------------------------------------------------------------
 % 1. File paths
 % -------------------------------------------------------------------------
-csv_path = '/Users/josefinamattoli/Library/CloudStorage/GoogleDrive-josefinamattoli@gmail.com/.shortcut-targets-by-id/1x8K59aCdWa9nTsSzm0qLX40R4OEzEE2o/Practica_Electiva_Entre_Mentes_Y_Metodos_Alumnos/Nuestro paper/Revision_2/Analisis_Revision_2/Data_CasiCasiFinal_Resiliencia.csv';
+csv_path = 'Insert_Your_Data_File_Path_Here.csv';
 
 output_name = 'Figure4_Versión2_ACEs_Assessment';
 
@@ -26,7 +26,7 @@ out_fig    = fullfile(output_dir, [output_name '.fig']);
 % -------------------------------------------------------------------------
 opts                   = detectImportOptions(csv_path, 'Delimiter', ',');
 opts.VariableNamesLine = 1;
-opts.DataLines         = [3 Inf];
+opts.DataLines         = [2 Inf];
 opts                   = setvartype(opts, 'char');
 T                      = readtable(csv_path, opts);
 
@@ -73,13 +73,24 @@ end
 % 4. Aggregate counts
 % -------------------------------------------------------------------------
 
-% 4A — frequency of each ACE category across studies
+% 4A — frequency of each ACE category across articles
 [unique_types, ~, idx_t] = unique(strtrim(all_types));
 type_counts = accumarray(idx_t, 1);
-[type_counts_sorted, sort_idx_t] = sort(type_counts, 'ascend');
-type_labels_sorted = unique_types(sort_idx_t);
 
-% 4B — cross-tabulation: N ACE categories x N instruments per study
+% Fixed display order instead of sorting by count. barh plots index 1 at
+% the bottom and the last index at the top, so listing the categories
+% bottom-to-top here makes the figure read, top to bottom:
+% Abuse, Neglect, Household dysfunction, Community-Level ACEs.
+desired_order = {'Community-Level ACEs', 'Household dysfunction', 'Neglect', 'Abuse'};
+[tf, loc] = ismember(lower(desired_order), lower(unique_types));
+if ~all(tf)
+    error('Panel 4A: could not match these categories to Types_ACEs values: %s', ...
+          strjoin(desired_order(~tf), ', '));
+end
+type_labels_sorted = unique_types(loc);
+type_counts_sorted = type_counts(loc);
+
+% 4B — cross-tabulation: N ACE categories x N instruments per article
 max_types  = max(n_types_per_art);
 max_instr  = max(n_instr_per_art);
 type_n_vals  = 1:max_types;
@@ -127,8 +138,8 @@ barh(1:n_types, type_counts_sorted, 0.6, ...
      'FaceColor', clr_bar, 'EdgeColor', 'none');
 yticks(1:n_types);
 yticklabels(type_labels_sorted);
-xlabel('Number of studies', 'FontSize', fs_label);
-title('A: ACEs categories studied', 'FontWeight', 'bold', 'FontSize', fs_title, ...
+xlabel('Number of articles', 'FontSize', fs_label);
+title('A', 'FontWeight', 'bold', 'FontSize', fs_title, ...
       'Units', 'normalized', 'Position', [0 1 0], ...
       'HorizontalAlignment', 'left');
 ax_a.XAxis.TickValues = 0:1:max(type_counts_sorted)+1;
@@ -144,8 +155,9 @@ imagesc(ax_c, cross_matrix);
 axis(ax_c, 'xy');   % keep row 1 (fewest categories) at the bottom
 colormap(ax_c, [linspace(1, 0.20, 256)', linspace(1, 0.20, 256)', linspace(1, 0.20, 256)']);
 cb = colorbar(ax_c);
-cb.Label.String = 'Number of studies';
+cb.Label.String = 'Number of articles';
 cb.Label.FontSize = fs_label;
+cb.Ticks = 0:max(cross_matrix(:));   % integer-only ticks (removes 0.5/1.5/2.5)
 
 xticks(1:numel(instr_n_vals));
 xticklabels(arrayfun(@num2str, instr_n_vals, 'UniformOutput', false));
@@ -153,14 +165,14 @@ yticks(1:numel(type_n_vals));
 yticklabels(arrayfun(@num2str, type_n_vals, 'UniformOutput', false));
 xlabel('Number of instruments',    'FontSize', fs_label);
 ylabel('Number of ACE categories', 'FontSize', fs_label);
-title(sprintf('B: ACE categories vs. instruments per study (Spearman \\rho = %.2f)', rho), ...
+title(sprintf('B', rho), ...
       'FontWeight', 'bold', 'FontSize', fs_title, ...
       'Units', 'normalized', 'Position', [0 1 0], ...
       'HorizontalAlignment', 'left');
 ax_c.FontSize = fs_tick;
 ax_c.Box      = 'on';
 
-% Print the study count inside each non-empty cell, in a contrasting color
+% Print the article count inside each non-empty cell, in a contrasting color
 for r = 1:size(cross_matrix, 1)
     for c = 1:size(cross_matrix, 2)
         if cross_matrix(r, c) > 0
@@ -175,7 +187,7 @@ for r = 1:size(cross_matrix, 1)
         end
     end
 end
-% Note: cells with 0 studies are left blank (background color) rather than
+% Note: cells with 0 articles are left blank (background color) rather than
 % printed as "0", to keep the heatmap readable.
 
 % -------------------------------------------------------------------------
